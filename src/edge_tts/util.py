@@ -55,7 +55,7 @@ async def _run_tts(args: Any) -> None:
         return
 
     # 执行文本到语音合成操作
-    tts: Communicate = Communicate(
+    tts: Communicate = Communicate(  # 创建一个 tts 变量，将其初始化为 Communicate 类的一个实例。
         args.text,
         args.voice,
         proxy=args.proxy,
