@@ -5,7 +5,6 @@ Basic example of edge_tts usage.
 """
 
 import asyncio
-
 import edge_tts
 
 TEXT = "Hello World!"
