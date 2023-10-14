@@ -303,15 +303,20 @@ class Communicate:
     async def stream(self) -> AsyncGenerator[Dict[str, Any], None]:
         """Streams audio and metadata from the service."""
 
+        # 将文本分割成适当长度的部分，以确保它适合语音合成服务。
         texts = split_text_by_byte_length(
             escape(remove_incompatible_characters(self.text)),
             calc_max_mesg_size(self.voice, self.rate, self.volume, self.pitch),
         )
+
+        # 用于存储最终音频的数据
         final_utterance: Dict[int, int] = {}
         prev_idx = -1
         shift_time = -1
 
+        # 创建 SSL 上下文，用于安全连接
         ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+        # 遍历文本部分并向语音合成服务发送请求
         for idx, text in enumerate(texts):
             async with aiohttp.ClientSession(
                 trust_env=True,
@@ -355,6 +360,7 @@ class Communicate:
                 # any problems.
                 #
                 # Also pay close attention to double { } in request (escape for f-string).
+                # 准备要发送到服务的请求
                 await websocket.send_str(
                     f"X-Timestamp:{date}\r\n"
                     "Content-Type:application/json; charset=utf-8\r\n"
@@ -373,6 +379,7 @@ class Communicate:
                     )
                 )
 
+                # 遍历从 WebSocket 接收的消息
                 async for received in websocket:
                     if received.type == aiohttp.WSMsgType.TEXT:
                         parameters, data = get_headers_and_data(received.data)
