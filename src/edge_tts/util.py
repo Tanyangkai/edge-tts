@@ -2,7 +2,6 @@
 Main package.
 """
 
-
 import argparse
 import asyncio
 import sys
@@ -22,12 +21,12 @@ async def _print_voices(*, proxy: str) -> None:
 
         for key in voice.keys():
             if key in (
-                "SuggestedCodec",
-                "FriendlyName",
-                "Status",
-                "VoiceTag",
-                "Name",
-                "Locale",
+                    "SuggestedCodec",
+                    "FriendlyName",
+                    "Status",
+                    "VoiceTag",
+                    "Name",
+                    "Locale",
             ):
                 continue
             pretty_key_name = key if key != "ShortName" else "Name"
@@ -61,7 +60,7 @@ async def _run_tts(args: Any) -> None:
     )
     subs: SubMaker = SubMaker()
     with open(
-        args.write_media, "wb"
+            args.write_media, "wb"
     ) if args.write_media else sys.stdout.buffer as audio_file:
         async for chunk in tts.stream():
             if chunk["type"] == "audio":
@@ -132,10 +131,19 @@ async def amain() -> None:
         await _run_tts(args)
 
 
+'''
+asyncio 是 Python 中的一个库，用于编写基于事件循环的异步程序。
+它允许你编写异步代码以处理并发、并行执行的任务，而无需使用多线程或多进程的复杂性。
+asyncio 提供了协程（coroutine）和事件循环（event loop）的支持，使开发者能够轻松处理 I/O 操作、网络通信、定时任务等，而不会阻塞主程序的执行。
+'''
+
+
 def main() -> None:
     """Run the main function using asyncio."""
+    # 获取事件循环（event loop），在asyncio中用于管理任务的执行和调度。
     loop = asyncio.get_event_loop_policy().get_event_loop()
     try:
+        # 运行 asyncio 主函数 amain()，直到其中的所有异步任务完成。
         loop.run_until_complete(amain())
     finally:
         loop.close()
