@@ -37,6 +37,9 @@ async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
 
     try:
+        # 用来检查是否可以直接将TTS输出写入终端的
+        '''如果标准输入和标准输出都连接到终端，并且用户没有指定将TTS输出写入媒体文件，就会显示警告信息，提示用户TTS输出将写入终端，并要求用户按回车键继续。
+        这是为了确保用户明白TTS输出将显示在终端上，并有机会取消操作。'''
         if sys.stdin.isatty() and sys.stdout.isatty() and not args.write_media:
             print(
                 "Warning: TTS output will be written to the terminal. "
@@ -45,11 +48,13 @@ async def _run_tts(args: Any) -> None:
                 "Press Enter to continue.",
                 file=sys.stderr,
             )
+            # 用于等待用户的输入
             input()
     except KeyboardInterrupt:
         print("\nOperation canceled.", file=sys.stderr)
         return
 
+    # 执行文本到语音合成操作
     tts: Communicate = Communicate(
         args.text,
         args.voice,
@@ -58,7 +63,10 @@ async def _run_tts(args: Any) -> None:
         volume=args.volume,
         pitch=args.pitch,
     )
+    # 创建字幕（subtitles）
     subs: SubMaker = SubMaker()
+
+    # 处理TTS输出和创建字幕
     with open(
             args.write_media, "wb"
     ) if args.write_media else sys.stdout.buffer as audio_file:
@@ -79,8 +87,11 @@ async def _run_tts(args: Any) -> None:
 
 async def amain() -> None:
     """Async main function"""
+    # 创建一个命令行解析器，用于解析命令行参数。
     parser = argparse.ArgumentParser(description="Microsoft Edge TTS")
     group = parser.add_mutually_exclusive_group(required=True)
+
+    # 添加命令行参数选项
     group.add_argument("-t", "--text", help="what TTS will say")
     group.add_argument("-f", "--file", help="same as --text but read from file")
     parser.add_argument(
@@ -112,21 +123,26 @@ async def amain() -> None:
         help="send subtitle output to provided file instead of stderr",
     )
     parser.add_argument("--proxy", help="use a proxy for TTS and voice list.")
+
+    # 解析命令行参数
     args = parser.parse_args()
 
+    # 如果用户使用 -l 或 --list-voices 选项，列出可用的语音并退出程序。
     if args.list_voices:
         await _print_voices(proxy=args.proxy)
         sys.exit(0)
 
+    # 如果指定了输入文件 (-f 或 --file)，从文件中读取文本内容，否则使用命令行传递的文本 (-t 或 --text)。
     if args.file is not None:
-        # we need to use sys.stdin.read() because some devices
-        # like Windows and Termux don't have a /dev/stdin.
+        # 如果文件路径是标准输入（/dev/stdin），则从标准输入读取文本。
         if args.file == "/dev/stdin":
             args.text = sys.stdin.read()
         else:
+            # 否则，从指定文件中读取文本。
             with open(args.file, "r", encoding="utf-8") as file:
                 args.text = file.read()
 
+    # 如果文本内容存在，调用 _run_tts 函数运行 TTS。
     if args.text is not None:
         await _run_tts(args)
 
